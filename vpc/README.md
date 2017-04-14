@@ -1,11 +1,18 @@
 # AWS Virtual Private Cloud (VPC) template (IPv4)
 Within Amazon Web Services a default VPC is available to you, but all subnets are public facing and ready-to-go examples of a VPC with public and private subnets are hard to find. This template will create in an AWS region a VPC with both public- and private-subnets. These public- and private-subnets will extend to any of the regions available (April 2017) availability zones. The template is configurable via some parameters so you can use one and the same template through your DTAP street.
 
+### Explanation of terms used
+* Public subnet – can connect to the internet through an Internet Gateway. Instances in a public subnet require public IPs to be directly be connectable from and to the internet.
+* Private subnet – can by default not directly connect to the internet but traffic needs to be routed via a NAT gateway (stationed in a public subnet). Private subnet instances only need a private IP and should not have public IP.
+* <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Internet_Gateway.html" target="_blank">AWS Internet Gateway</a> - A AWS Internet Gateway is a horizontally scaled, redundant, and highly available VPC component that allows communication between instances in your VPC and the Internet.
+* <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-nat-gateway.html" target="_blank">AWS NAT Gateway </a> - You can use a network address translation (NAT) gateway to enable instances in a private subnet to connect to the Internet or other AWS services, but prevent the Internet from initiating a connection with those instances.
+
 ## Parameters
-1. **EnvironmentType** - A Select list (Dev, ACC, PROD) used to “tag” the resources created.
-1. IPv4 subnet **class** - A number between 0 and 255 used for the IPv4 IP range of the VPC and subnets (10.xxx.0.0/16)
+1. **EnvironmentType** - A Select list (Dev, ACC, PROD) used to “tag” the resources created. Note: once VPC is created, this option cannot be changed.
+1. IPv4 subnet **class** - A number between 0 and 255 used for the IPv4 IP range of the VPC and subnets (10.xxx.0.0/16). Note: once VPC is created, this option cannot be changed.
 1. **AddExternalIP** - No / Yes - Should we (by default) add an external IP in PUBLIC subnet(s)? 
-1. **AddNatGateway** - No / Yes - Should we add a NAT gateway, so PRIVATE subnet can connect to internet.
+1. **AddNatGateway** - No / Yes - Should we add a NAT gateway, so instances in the PRIVATE subnet can connect to internet.
+1. **HighAvailableNatGateway** - Only one NAT gateway or High Available setup (in all AZ's a NAT-GW). This option only applies wen the option AddNatGateway is set to “Yes”
 1. **DeveloperName** - A name, saved with created resources.
 
 See also <a href="./images/Create-Stack-Parameters.png?raw=true" target="_blank">this screen shot</a> for the options.
@@ -13,19 +20,15 @@ See also <a href="./images/Create-Stack-Parameters.png?raw=true" target="_blank"
 ## Other Templates
 * [Bastion Host (high available)](../bastion/)
 
-## VPC with publice and private subnets - no NAT gateway
-ToDo - update comment here
-
+## VPC with public and private subnets - no NAT gateway
+If you want to create a VPC with both public and private subnets in all available availability zones in a region. But the private subnets do NOT need any internet access. You can use the template with the parameter **AddNatGateway** set to **No**
 ![Architecture](./images/VPC-Private-No-Internet-access-four-regions.png?raw=true "VPC, private subnets has no internet connectivity")
 
-
-## VPC with publice and private subnets - one NAT gateway
-ToDo - update comment here
-
+## VPC with public and private subnets - one NAT gateway
+If you set the parameter **AddNatGateway** to “Yes” but the parameter **HighAvailableNatGateway** to “Only one”; all private subnets can connect to the internet through one AWS NAT Gateway. This NAT Gateway will be created in the first availability zone of that region. If that region fails (for whatever reason), the private subnets will lose their internet connectivity. This option should be used for DTA environments to save costs. Or also for production environments where internet connectivity from private subnets is not 100% of the time necessary (most cases).
 ![Architecture](./images/VPC-One-NAT-GW-four-regions.png?raw=true "VPC with one NAT gateway")
 
 ## VPC with private subnets - high available NAT gateways
-ToDo - update comment here
-
+If you set the parameter **AddNatGateway** to “Yes” but the parameter **HighAvailableNatGateway** to “Highly Available”; all private subnets can connect to the internet through via their own AWS NAT Gateway. So, in every availability zone a AWS NAT Gateway is created, ensuring the internet connectivity of that private subnet. This option should only be used if the private subnets are depending on an internet connection. This is also the most expensive option and should carefully be used.
 ![Architecture](./images/VPC-HA-four-regions.png?raw=true "VPC high available setup")
 
