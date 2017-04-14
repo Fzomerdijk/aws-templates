@@ -1,6 +1,6 @@
 # AWS-Templates
-Working with Amazon Web Services (AWS), I found that most examples found on the AWS website and other GIT repositories are to basic and need a work before they can be used. For example; why change a VPC template according to the number of availability zones, if you can program this within the template.
-Therefor I made some ready to go AWS templates that, I daily use in production environments. 
+Working with Amazon Web Services (AWS), I found that most examples found on the AWS website and other GIT repositories are to basic and need work before they can be used. For example; why change a VPC template according to the number of availability zones, if you can program this within the template...
+Therefor I made some "ready to go" AWS templates.
 
 ## Templates
 * [Virtual Private Cloud - VPC (json)](./vpc/)
