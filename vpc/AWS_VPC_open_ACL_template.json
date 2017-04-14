@@ -1,0 +1,919 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "VPC and subnet creation - v1.0 - 2-5 AZs  (Publ. GateWay, RouteTables, ACLs and NAT-GateWay(s)",
+  
+  "Parameters": {
+
+    "aEnvironmentType": {
+      "Type": "String",
+      "Default": "Dev",
+      "AllowedValues": ["Dev", "Acc", "PROD"],
+      "Description": "Type of the VPC and subnets"
+    },
+    
+    "classB": {
+        "Description": "Class B of VPC (10.xxx.0.0/16)",
+        "Type": "String",
+        "MinLength": "1",
+        "MaxLength": "3",
+        "Default": "..."
+    },
+        
+    "eAddExternalIP": {
+      "Type": "String",
+      "Description": "Should we (by default) add an external IP in PUBLIC subnet(s)?",
+      "Default": "No",
+      "AllowedValues": ["No", "Yes"]
+    },
+        
+    "eAddNatGateway": {
+      "Type": "String",
+      "Description": "Should we add a NAT gateway, so PRIVATE subnet can connect to internet.",
+      "Default": "No",
+      "AllowedValues": ["No", "Yes"]
+    },
+    
+    "fHighAvailableNatGateway": {
+      "Type": "String",
+      "Description": "Only one NAT gateway (in AZ-1a) or HA setup (in all AZ's a NAT-GW).",
+      "Default": "Only one",
+      "AllowedValues": ["Only one", "Highly Available"]
+    },
+
+    "zDeveloperName": {
+      "Type": "String",
+      "MinLength": "2",
+      "Description": "(Your) Name, saved with created resources."
+    }
+    
+  },
+  
+  "Mappings": {
+    "RegionMapMinNrAZs": {
+      "us-east-1": {"AZs": "5"},
+      "us-east-2": {"AZs": "3"},
+      "us-west-1": {"AZs": "2"},
+      "us-west-2": {"AZs": "3"},
+      "ap-south-1": {"AZs": "2"},
+      "ap-southeast-1": {"AZs": "2"},
+      "ap-southeast-2": {"AZs": "3"},
+      "ap-northeast-1": {"AZs": "2"},
+      "ap-northeast-2": {"AZs": "2"},
+      "ca-central-1": {"AZs": "2"},
+      "eu-west-1": {"AZs": "3"},
+      "eu-west-2": {"AZs": "2"},
+      "eu-central-1": {"AZs": "2"},
+      "sa-east-1": {"AZs": "3"}
+    }
+  },
+  
+  "Conditions": {
+  
+    "HasThreeAZs":
+      {"Fn::Or": [
+        {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "3"] },      
+        {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "4"] },
+        {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "5"] }
+      ]},
+
+    "HasFourAZs":
+      {"Fn::Or": [
+        {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "4"] },
+        {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "5"] }
+      ]},
+        
+    "HasFiveAZs": {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "5"] },
+    
+    "MapPublicIpOnLaunch": {"Fn::Equals": ["Yes", {"Ref": "eAddExternalIP"}]},
+
+    "AddNatGW": {"Fn::Equals": ["Yes", {"Ref": "eAddNatGateway"}]},
+
+    "natGWHighlyAvailable": 
+      {"Fn::And": [
+        {"Fn::Equals": ["Yes", {"Ref": "eAddNatGateway"}]},
+        {"Fn::Equals": ["Highly Available", {"Ref": "fHighAvailableNatGateway"}]}
+      ]},
+
+      "HasThreeAZsAndNatGWHighlyAvailable":  
+        {"Fn::And": [
+          {"Fn::Or": [
+            {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "3"] },      
+            {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "4"] },
+            {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "5"] }
+          ]},
+          {"Fn::And": [
+            {"Fn::Equals": ["Yes", {"Ref": "eAddNatGateway"}]},
+            {"Fn::Equals": ["Highly Available", {"Ref": "fHighAvailableNatGateway"}]}
+          ]}
+        ]},
+
+      "HasFourAZsAndNatGWHighlyAvailable":  
+        {"Fn::And": [
+          {"Fn::Or": [
+            {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "4"] },
+            {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "5"] }
+          ]},
+          {"Fn::And": [
+            {"Fn::Equals": ["Yes", {"Ref": "eAddNatGateway"}]},
+            {"Fn::Equals": ["Highly Available", {"Ref": "fHighAvailableNatGateway"}]}
+          ]}
+        ]},
+      
+      "HasFiveAZsAndNatGWHighlyAvailable":  
+        {"Fn::And": [
+          {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "5"] },
+          {"Fn::And": [
+            {"Fn::Equals": ["Yes", {"Ref": "eAddNatGateway"}]},
+            {"Fn::Equals": ["Highly Available", {"Ref": "fHighAvailableNatGateway"}]}
+          ]}
+        ]}
+
+  },
+  
+  "Resources": {
+  
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "InstanceTenancy": "default",        
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "VPC", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation"},
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },  
+
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "DependsOn": "VPC",
+      "Properties": {
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "GateWay", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation"},
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }          
+        ]
+      }
+    },
+    
+    "AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "DependsOn": [ "VPC", "InternetGateway" ],
+      "Properties": { "VpcId": {"Ref": "VPC"}, "InternetGatewayId": {"Ref": "InternetGateway"}  }
+    },
+
+    "PublicSubnet1a": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "0", { "Fn::GetAZs": "" } ]},
+        "MapPublicIpOnLaunch": {"Fn::If": ["MapPublicIpOnLaunch", true, false]},
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1a", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation"},
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Public" }          
+        ]
+      }
+    },
+    
+    "PublicSubnet1b": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".1.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "1", { "Fn::GetAZs": "" } ]},
+        "MapPublicIpOnLaunch": {"Fn::If": ["MapPublicIpOnLaunch", true, false]},
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1b", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation"},
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },          
+          { "Key": "Reach", "Value": "Public" }          
+        ]
+      }
+    },
+    
+    "PublicSubnet1c": {
+      "Type": "AWS::EC2::Subnet",
+      "Condition": "HasThreeAZs",      
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".2.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "2", { "Fn::GetAZs": "" } ] },
+        "MapPublicIpOnLaunch": {"Fn::If": ["MapPublicIpOnLaunch", true, false]},
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1c", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Public" }          
+        ]
+      }
+    },
+    
+    "PublicSubnet1d": {
+      "Type": "AWS::EC2::Subnet",
+      "Condition": "HasFourAZs",      
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".3.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
+        "MapPublicIpOnLaunch": {"Fn::If": ["MapPublicIpOnLaunch", true, false]},
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1d", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Public" }          
+        ]
+      }
+    },
+
+    "PublicSubnet1e": {
+      "Type": "AWS::EC2::Subnet",
+      "Condition": "HasFiveAZs",      
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".4.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
+        "MapPublicIpOnLaunch": {"Fn::If": ["MapPublicIpOnLaunch", true, false]},
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1e", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Public" }          
+        ]
+      }
+    },
+
+    
+    "PrivateSubnet1a": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": "VPC",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".5.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "0", { "Fn::GetAZs": "" } ]},
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1a", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation"},
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Private" }          
+        ]
+      }
+    },
+    
+    "PrivateSubnet1b": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": "VPC",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".6.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "1", { "Fn::GetAZs": "" } ]},
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1b", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation"},
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Private" }          
+        ]
+      }
+    },
+    
+    "PrivateSubnet1c": {
+      "Type": "AWS::EC2::Subnet",
+      "Condition": "HasThreeAZs",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".7.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "2", { "Fn::GetAZs": "" } ] },
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1c", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Private" }          
+        ]
+      }
+    },
+    
+    "PrivateSubnet1d": {
+      "Type": "AWS::EC2::Subnet",
+      "Condition": "HasFourAZs",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".8.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1d", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Private" }          
+        ]
+      }
+    },
+
+    "PrivateSubnet1e": {
+      "Type": "AWS::EC2::Subnet",
+      "Condition": "HasFiveAZs",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".9.0/24"]]},
+        "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1e", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} },
+          { "Key": "Reach", "Value": "Private" }          
+        ]
+      }
+    },
+
+    
+    
+    "PublicRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "DependsOn": [ "VPC", "AttachGateway" ],
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Route Table", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },
+    "PublicRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": [ "VPC", "PublicRouteTable", "AttachGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PublicRouteTable" },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": { "Ref": "InternetGateway" }
+      }
+    },
+    "PublicSubnet1aRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": [ "PublicRouteTable", "PublicSubnet1a", "AttachGateway" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PublicSubnet1a"},
+        "RouteTableId": {"Ref": "PublicRouteTable"}
+      }
+    },
+    "PublicSubnet1bRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": [ "PublicRouteTable", "PublicSubnet1b", "AttachGateway" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PublicSubnet1b"},
+        "RouteTableId": {"Ref": "PublicRouteTable"}
+      }
+    },
+    "PublicSubnet1cRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Condition": "HasThreeAZs",      
+      "DependsOn": [ "PublicRouteTable", "PublicSubnet1c", "AttachGateway" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PublicSubnet1c"},
+        "RouteTableId": {"Ref": "PublicRouteTable"}
+      }
+    },
+    "PublicSubnet1dRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Condition": "HasFourAZs",      
+      "DependsOn": [ "PublicRouteTable", "PublicSubnet1d", "AttachGateway" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PublicSubnet1d"},
+        "RouteTableId": {"Ref": "PublicRouteTable"}
+      }
+    },
+    "PublicSubnet1eRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Condition": "HasFiveAZs",      
+      "DependsOn": [ "PublicRouteTable", "PublicSubnet1e", "AttachGateway" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PublicSubnet1e"},
+        "RouteTableId": {"Ref": "PublicRouteTable"}
+      }
+    },
+
+    
+    "PublicNetworkAcl": {
+       "Type": "AWS::EC2::NetworkAcl",
+       "Properties": {
+          "VpcId": {"Ref": "VPC"},
+          "Tags": [
+            { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Network ACL", {"Ref": "classB"}]]} },
+            { "Key": "Owner","Value": "Cloudformation"},
+            { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+            { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+          ]
+       }
+    },
+    
+    "PublicAclEgress100": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "True",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "100"
+      }
+    },     
+
+    "PublicAclIngress100": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "false",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "100"
+      }
+    },     
+
+    "PublicSubnet1aNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1a", "PublicAclEgress100", "PublicAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PublicSubnet1a"},
+         "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },    
+    "PublicSubnet1bNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1b", "PublicAclEgress100", "PublicAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PublicSubnet1b"},
+         "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },    
+    "PublicSubnet1cNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Condition": "HasThreeAZs",      
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1c", "PublicAclEgress100", "PublicAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PublicSubnet1c"},
+         "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },    
+    "PublicSubnet1dNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Condition": "HasFourAZs",      
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1d", "PublicAclEgress100", "PublicAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PublicSubnet1d"},
+         "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },
+    "PublicSubnet1eNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Condition": "HasFiveAZs",      
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1e", "PublicAclEgress100", "PublicAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PublicSubnet1e"},
+         "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },    
+    
+
+
+    "PrivateRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "DependsOn": [ "VPC" ],
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Route Table", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },
+
+    "PrivateRouteTable1a": {
+      "Type": "AWS::EC2::RouteTable",
+      "Condition": "natGWHighlyAvailable",      
+      "DependsOn": [ "VPC" ],
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Route Table 1a", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },
+
+    "PrivateRouteTable1b": {
+      "Type": "AWS::EC2::RouteTable",
+      "Condition": "natGWHighlyAvailable",      
+      "DependsOn": [ "VPC" ],
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Route Table 1b", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },
+
+    "PrivateRouteTable1c": {
+      "Type": "AWS::EC2::RouteTable",
+      "Condition": "HasThreeAZsAndNatGWHighlyAvailable",      
+      "DependsOn": [ "VPC" ],
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Route Table 1c", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },
+
+    "PrivateRouteTable1d": {
+      "Type": "AWS::EC2::RouteTable",
+      "Condition": "HasFourAZsAndNatGWHighlyAvailable",      
+      "DependsOn": [ "VPC" ],
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Route Table 1d", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },
+
+    "PrivateRouteTable1e": {
+      "Type": "AWS::EC2::RouteTable",
+      "Condition": "HasFiveAZsAndNatGWHighlyAvailable",     
+      "DependsOn": [ "VPC" ],
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Route Table 1e", {"Ref": "classB"}]]} },
+          { "Key": "Owner","Value": "Cloudformation" },
+          { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+          { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+        ]
+      }
+    },
+    
+    "PrivateSubnet1aRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": [ "PrivateRouteTable", "PrivateSubnet1a" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PrivateSubnet1a"},
+        "RouteTableId": {"Fn::If": ["natGWHighlyAvailable", {"Ref": "PrivateRouteTable1a"}, {"Ref": "PrivateRouteTable"}]}
+      }
+    },
+    "PrivateSubnet1bRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": [ "PrivateRouteTable", "PrivateSubnet1b" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PrivateSubnet1b"},
+        "RouteTableId": {"Fn::If": ["natGWHighlyAvailable", {"Ref": "PrivateRouteTable1b"}, {"Ref": "PrivateRouteTable"}]}
+      }
+    },
+    "PrivateSubnet1cRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Condition": "HasThreeAZs",
+      "DependsOn": [ "PrivateRouteTable", "PrivateSubnet1c" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PrivateSubnet1c"},
+        "RouteTableId": {"Fn::If": ["natGWHighlyAvailable", {"Ref": "PrivateRouteTable1c"}, {"Ref": "PrivateRouteTable"}]}
+      }
+    },
+    "PrivateSubnet1dRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Condition": "HasFourAZs",
+      "DependsOn": [ "PrivateRouteTable", "PrivateSubnet1d" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PrivateSubnet1d"},
+        "RouteTableId": {"Fn::If": ["natGWHighlyAvailable", {"Ref": "PrivateRouteTable1d"}, {"Ref": "PrivateRouteTable"}]}
+      }
+    },
+    "PrivateSubnet1eRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Condition": "HasFiveAZs",
+      "DependsOn": [ "PrivateRouteTable", "PrivateSubnet1e" ],
+      "Properties": {
+        "SubnetId": {"Ref": "PrivateSubnet1e"},
+        "RouteTableId": {"Fn::If": ["natGWHighlyAvailable", {"Ref": "PrivateRouteTable1e"}, {"Ref": "PrivateRouteTable"}]}
+      }
+    },
+
+   "PrivateNetworkAcl": {
+       "Type": "AWS::EC2::NetworkAcl",
+       "Properties": {
+          "VpcId": {"Ref": "VPC"},
+          "Tags": [
+            { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Network ACL", {"Ref": "classB"}]]} },
+            { "Key": "Owner","Value": "Cloudformation"},
+            { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
+            { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
+          ]
+       }
+    },
+    
+    "PrivateAclEgress100": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "True",
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "100"
+      }
+    },     
+
+    "PrivateAclIngress100": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
+        "Egress": "false",
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "100"
+      }
+    },     
+
+    "PrivateAclIngress200": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Condition":  "AddNatGW",
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "false",
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": "1024", "To": "65535"},
+        "RuleAction": "allow",
+        "RuleNumber": "200"
+      }
+    },     
+
+    "PrivateSubnet1aNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1a", "PrivateAclEgress100", "PrivateAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PrivateSubnet1a"},
+         "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },    
+    "PrivateSubnet1bNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1b", "PrivateAclEgress100", "PrivateAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PrivateSubnet1b"},
+         "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },    
+    "PrivateSubnet1cNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Condition": "HasThreeAZs",      
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1c", "PrivateAclEgress100", "PrivateAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PrivateSubnet1c"},
+         "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },    
+    "PrivateSubnet1dNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Condition": "HasFourAZs",      
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1d", "PrivateAclEgress100", "PrivateAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PrivateSubnet1d"},
+         "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },
+    "PrivateSubnet1eNetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Condition": "HasFiveAZs",      
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1e", "PrivateAclEgress100", "PrivateAclIngress100" ],
+      "Properties": {
+         "SubnetId": {"Ref": "PrivateSubnet1e"},
+         "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },
+    
+    
+    "EIPPrivateGW1a": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "AddNatGW",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "Domain": {"Ref": "VPC"}
+      }
+    },
+    "NatGateway1a": {
+      "Type": "AWS::EC2::NatGateway",
+      "Condition": "AddNatGW",       
+      "DependsOn": ["VPC", "EIPPrivateGW1a", "PublicSubnet1a"],
+      "Properties": {
+        "AllocationId": {"Fn::GetAtt": ["EIPPrivateGW1a", "AllocationId"]},
+        "SubnetId": {"Ref": "PublicSubnet1a"}
+      }
+    },
+    "PrivateNatRoute1a": {
+      "Type": "AWS::EC2::Route",
+      "Condition": "AddNatGW",      
+      "DependsOn": ["VPC", "PrivateRouteTable"],
+      "Properties": {
+        "RouteTableId": {"Fn::If": ["natGWHighlyAvailable", {"Ref": "PrivateRouteTable1a"}, {"Ref": "PrivateRouteTable"}]},
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {"Ref": "NatGateway1a"}
+      }
+    },
+    
+    "EIPPrivateGW1b": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "natGWHighlyAvailable",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "Domain": {"Ref": "VPC"}
+      }
+    },
+    "NatGateway1b": {
+      "Type": "AWS::EC2::NatGateway",
+      "Condition": "natGWHighlyAvailable",       
+      "DependsOn": ["VPC", "EIPPrivateGW1b", "PublicSubnet1b"],
+      "Properties": {
+        "AllocationId": {"Fn::GetAtt": ["EIPPrivateGW1b", "AllocationId"]},
+        "SubnetId": {"Ref": "PublicSubnet1b"}
+      }
+    },
+    "PrivateNatRoute1b": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": ["VPC", "PrivateRouteTable", "NatGateway1b"],
+      "Condition":  "natGWHighlyAvailable",
+      "Properties": {
+        "RouteTableId": {"Ref": "PrivateRouteTable1b"},
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {"Ref": "NatGateway1b"}
+      }
+    },
+    
+    "EIPPrivateGW1c": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "HasThreeAZsAndNatGWHighlyAvailable",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "Domain": {"Ref": "VPC"}
+      }
+    },
+    "NatGateway1c": {
+      "Type": "AWS::EC2::NatGateway",
+      "Condition":  "HasThreeAZsAndNatGWHighlyAvailable",
+      "DependsOn": ["VPC", "EIPPrivateGW1c", "PublicSubnet1c"],
+      "Properties": {
+        "AllocationId": {"Fn::GetAtt": ["EIPPrivateGW1c", "AllocationId"]},
+        "SubnetId": {"Ref": "PublicSubnet1c"}
+      }
+    },
+    "PrivateNatRoute1cHA": {
+      "Type": "AWS::EC2::Route",
+      "Condition":  "HasThreeAZsAndNatGWHighlyAvailable",
+      "DependsOn": ["VPC", "PrivateRouteTable"],
+      "Properties": {
+        "RouteTableId": {"Ref": "PrivateRouteTable1c"},
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {"Ref": "NatGateway1c"}
+      }
+    },
+
+    "EIPPrivateGW1d": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "HasFourAZsAndNatGWHighlyAvailable",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "Domain": {"Ref": "VPC"}
+      }
+    },
+    "NatGateway1d": {
+      "Type": "AWS::EC2::NatGateway",
+      "Condition":  "HasFourAZsAndNatGWHighlyAvailable",
+      "DependsOn": ["VPC", "EIPPrivateGW1d", "PublicSubnet1d"],
+      "Properties": {
+        "AllocationId": {"Fn::GetAtt": ["EIPPrivateGW1d", "AllocationId"]},
+        "SubnetId": {"Ref": "PublicSubnet1d"}
+      }
+    },
+    "PrivateNatRoute1dHA": {
+      "Type": "AWS::EC2::Route",
+      "Condition":  "HasFourAZsAndNatGWHighlyAvailable", 
+      "DependsOn": ["VPC", "PrivateRouteTable"],
+      "Properties": {
+        "RouteTableId": {"Ref": "PrivateRouteTable1d"},
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {"Ref": "NatGateway1d"}
+      }
+    },
+
+    "EIPPrivateGW1e": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "HasFiveAZsAndNatGWHighlyAvailable",      
+      "DependsOn": "VPC",
+      "Properties": {
+        "Domain": {"Ref": "VPC"}
+      }
+    },
+    "NatGateway1e": {
+      "Type": "AWS::EC2::NatGateway",
+      "Condition":  "HasFiveAZsAndNatGWHighlyAvailable",
+      "DependsOn": ["VPC", "EIPPrivateGW1e", "PublicSubnet1e"],
+      "Properties": {
+        "AllocationId": {"Fn::GetAtt": ["EIPPrivateGW1e", "AllocationId"]},
+        "SubnetId": {"Ref": "PublicSubnet1e"}
+      }
+    },
+    "PrivateNatRoute1eHA": {
+      "Type": "AWS::EC2::Route",
+      "Condition":  "HasFiveAZsAndNatGWHighlyAvailable", 
+      "DependsOn": ["VPC", "PrivateRouteTable"],
+      "Properties": {
+        "RouteTableId": {"Ref": "PrivateRouteTable1e"},
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {"Ref": "NatGateway1e"}
+      }
+    }
+    
+    
+  },
+  
+  "Outputs": {
+                                                                           
+    "VPCName": { 
+      "Description": "VPC Name", 
+      "Value": { "Ref": "VPC"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "VPC", {"Ref": "classB"}]]}
+      }
+    },
+    "VPCGateWay": { 
+      "Description": "VPC Gateway", 
+      "Value": { "Ref": "InternetGateway"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "GateWay", {"Ref": "classB"}]]}
+      }
+    },    
+    "PublicRouteTable": { 
+      "Description": "Public Route Table", 
+      "Value": { "Ref": "PublicRouteTable"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PublicRouteTable", {"Ref": "classB"}]]}
+      }
+    },    
+    "PrivateRouteTable": { 
+      "Description": "Private Route Table", 
+      "Value": { "Ref": "PrivateRouteTable"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PrivateRouteTable", {"Ref": "classB"}]]}
+      }
+    }
+    
+  }
+  
+}
