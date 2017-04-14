@@ -1,5 +1,6 @@
 # AWS Virtual Private Cloud (VPC) template (IPv4)
-Within Amazon Web Services a default VPC is available to you, but all subnets are public facing and ready-to-go examples of a VPC with public and private subnets are hard to find. This template will create in an AWS region a VPC with both public- and private-subnets. These public- and private-subnets will extend to any of the regions available (April 2017) availability zones. The template is configurable via some parameters so you can use one and the same template through your DTAP street.
+Within Amazon Web Services a default VPC is available to you, but all subnets are public facing (no public subnets are created) and ready-to-go examples of a VPC with public and private subnets are hard to find. 
+This template will create a VPC with both public- and private-subnets. These public- and private-subnets will be created in ALL the availability zones that are available (April 2017) with the chosen region. The template is configurable via parameters so you can use one and the same template throughout your DTAP street.
 
 ### Explanation of terms used
 * Public subnet – can connect to the internet through an Internet Gateway. Instances in a public subnet require public IPs to be directly be connectable from and to the internet.
