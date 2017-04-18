@@ -3,6 +3,13 @@ Within Amazon Web Services a default VPC is available to you, but all subnets ar
 This template will create a VPC with both public- and private-subnets. 
 These public- and private-subnets will be created in ALL the availability zones that are available (April 2017) with the chosen region. The template is configurable via parameters so you can use one and the same template throughout your DTAP street.
 
+* [VPC with open Access Control Lists (ACL)](./AWS_VPC_open_ACL_template.json)
+* [VPC with strick Access Control List (ACL)](./AWS_VPC_strict_ACL_template.json)
+
+Where the Access Control List (ACL) in the "VPC with strick Access Control List" are accoding to 
+the <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_NACLs.html#VPC_Appendix_NACLs_Scenario_2?raw=true" target="_blank">AWS recommended settings</a>, 
+for a VPC with both public and private subnets.   
+
 ## Other Templates
 * [Bastion Host (high available)](../bastion/)
 
