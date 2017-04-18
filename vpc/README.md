@@ -1,17 +1,19 @@
 # AWS Virtual Private Cloud (VPC) template (IPv4)
 Within Amazon Web Services a default VPC is available to you, but all subnets are public facing (no public subnets are created) and ready-to-go template of a VPC with public- and private-subnets are hard to find. 
 This template will create a VPC with both public- and private-subnets. 
-These public- and private-subnets will be created in ALL the availability zones that are available (April 2017) with the chosen region. The template is configurable via parameters so you can use one and the same template throughout your DTAP street.
+These public- and private-subnets will be created in ALL the availability zones that are available (April 2017) within the chosen region. The template is configurable via parameters so you can use one and the same template throughout your DTAP street.
+
+Currently we got the next versions of this template:
 
 * [VPC with open Access Control Lists (ACL)](./AWS_VPC_open_ACL_template.json)
+
+This is a template that contains a VPC with a publica and private Access Control List, but these ACL's do not have any restriction. So it is up to you and the Security Groups to define your security inbound and outbound rules!  
+
 * [VPC with strick Access Control List (ACL)](./AWS_VPC_strict_ACL_template.json)
 
 Where the Access Control List (ACL) in the "VPC with strick Access Control List" are accoding to 
 the <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_NACLs.html#VPC_Appendix_NACLs_Scenario_2?raw=true" target="_blank">AWS recommended settings</a>, 
 for a VPC with both public and private subnets.   
-
-## Other Templates
-* [Bastion Host (high available)](../bastion/)
 
 ### Explanation of terms used
 * Public subnet – can connect to the internet through an Internet Gateway. Instances in a public subnet require public IPs to be directly be connectable from and to the internet.
@@ -47,4 +49,8 @@ If you set the parameter **Add NAT Gateway** to “Yes” but the parameter **Hi
 
 ![Architecture](./images/VPC-HA-four-regions.png?raw=true "VPC high available setup")
 
+## Other Templates
+* [Bastion Host (high available)](../bastion/)
 
+## Feedback & support
+If you want to give feedback or need support, please contact us at: [Indivirtual Support](mailto:support@indivirtual.com)
