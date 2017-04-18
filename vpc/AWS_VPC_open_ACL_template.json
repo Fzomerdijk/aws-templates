@@ -1,6 +1,60 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "VPC and subnet creation - v1.0 - 2-5 AZs  (Publ. GateWay, RouteTables, ACLs and NAT-GateWay(s)",
+
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "aEnvironmentType",
+                        "classB",
+                        "eAddExternalIP"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "NAT Configuration"
+                    },
+                    "Parameters": [
+                        "eAddNatGateway",
+                        "fHighAvailableNatGateway"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Tagging AWS Resources"
+                    },
+                    "Parameters": [
+                        "zDeveloperName"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "aEnvironmentType": {
+                    "default": "Environment Type"
+                },
+                "classB": {
+                    "default": "ClassB subnet number"
+                },
+                "eAddExternalIP": {
+                    "default": "Add external IP by default"
+                },
+                "eAddNatGateway": {
+                    "default": "Add NAT Gateway"
+                },
+                "fHighAvailableNatGateway": {
+                    "default": "High Available Nat Gateway setup"
+                },
+                "zDeveloperName": {
+                    "default": ""
+                }
+            }
+        }
+    },
   
   "Parameters": {
 
