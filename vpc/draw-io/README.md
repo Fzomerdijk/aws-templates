@@ -7,6 +7,6 @@ These XML files are sources for all the images in the ../images/ map. You can op
 1. Brows to your local git copy and select one of the XML templates.
 1. Click **open** to open the template in Draw.io.
 
-If you see any mistakes or enhancements, please let me know what they are.
+If you see any mistakes or enhancements, please let me know.
 
 Thanks in advance!
