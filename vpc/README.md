@@ -48,6 +48,27 @@ If you set the parameter **Add NAT Gateway** to “Yes” but the parameter **Hi
 
 ![Architecture](./images/VPC-HA-four-regions.png?raw=true "VPC high available setup")
 
+### Template output values
+The templates will output the next values and export these values also in your AWS (region) account, so they can be imported and used in another template. See also the <a href=”https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-importvalue.html” target="_blank">AWS documentation</a> about this.
+The "Export Name" values in the table below, are from creation of a template with **Environment Type** set to *Dev* and *55* as the **ClassB subnet number**.   
+
+|        Key        |        Value        |     Description     |    Export Name (example)     |
+| ----------------- | ------------------- | ------------------- | ---------------------------- |
+| VPCName           | aws-vpc-id          | VPC Name            | *Dev*-VPC-*55*               |
+| PrivateRouteTable | aws-rtb-id          | Private Route Table | *Dev*-PrivateRouteTable-*55* |
+| PublicRouteTable  | aws-rtb-id          | Public Route Table  | *Dev*-PublicRouteTable-*55*  |
+| VPCGateWay        | aws-igw-id          | VPC Gateway         | *Dev*-GateWay-*55*           |
+| PublicSubnet1a    | subnet-id           | Public Subnet 1a    | *Dev*-PublicSubnet1a-*55*    |
+| PublicSubnet1b    | subnet-id           | Public Subnet 1b    | *Dev*-PublicSubnet1b-*55*    |
+| PublicSubnet1c    | subnet-id or "none" | Public Subnet 1c    | *Dev*-PublicSubnet1c-*55*    |
+| PublicSubnet1d    | subnet-id or "none" | Public Subnet 1d    | *Dev*-PublicSubnet1d-*55*    |
+| PublicSubnet1e    | subnet-id or "none" | Public Subnet 1e    | *Dev*-PublicSubnet1e-*55*    |
+| PrivateSubnet1a   | subnet-id or "none" | Private Subnet 1a   | *Dev*-PrivateSubnet1a-*55*   |
+| PrivateSubnet1b   | subnet-id or "none" | Private Subnet 1b   | *Dev*-PrivateSubnet1b-*55*   |
+| PrivateSubnet1c   | subnet-id or "none" | Private Subnet 1c   | *Dev*-PrivateSubnet1c-*55*   |
+| PrivateSubnet1d   | subnet-id or "none" | Private Subnet 1d   | *Dev*-PrivateSubnet1d-*55*   |
+| PrivateSubnet1e   | subnet-id or "none" | Private Subnet 1e   | *Dev*-PrivateSubnet1e-*55*   |
+
 ## Other Templates
 * [Bastion Host (high available)](../bastion/)
 

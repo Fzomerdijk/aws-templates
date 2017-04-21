@@ -966,6 +966,78 @@
       "Export": {
         "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PrivateRouteTable", {"Ref": "classB"}]]}
       }
+    },
+    
+    "PublicSubnet1a" : {
+      "Description" : "Public Subnet 1a",
+      "Value" : {"Ref" : "PublicSubnet1a"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PublicSubnet1a", {"Ref": "classB"}]]}
+      }
+    },      
+    "PublicSubnet1b" : {
+      "Description" : "Public Subnet 1b",
+      "Value" : {"Ref" : "PublicSubnet1b"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PublicSubnet1b", {"Ref": "classB"}]]}
+      }
+    },      
+    "PublicSubnet1c" : {
+      "Description" : "Public Subnet 1c",
+      "Value" : {"Fn::If" : ["HasThreeAZs", {"Ref" : "PublicSubnet1c"}, "none"]},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PublicSubnet1c", {"Ref": "classB"}]]}
+      }
+    },
+    "PublicSubnet1d" : {
+      "Description" : "Public Subnet 1d",
+      "Value" : {"Fn::If" : ["HasFourAZs", {"Ref" : "PublicSubnet1d"}, "none"]},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PublicSubnet1d", {"Ref": "classB"}]]}
+      }
+    },
+    "PublicSubnet1e" : {
+      "Description" : "Public Subnet 1e",
+      "Value" : {"Fn::If" : ["HasFiveAZs", {"Ref" : "PublicSubnet1e"}, "none"]},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PublicSubnet1e", {"Ref": "classB"}]]}
+      }
+    },
+    
+    "PrivateSubnet1a" : {
+      "Description" : "Private Subnet 1a",
+      "Value" : {"Ref" : "PrivateSubnet1a"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PrivateSubnet1a", {"Ref": "classB"}]]}
+      }
+    },      
+    "PrivateSubnet1b" : {
+      "Description" : "Private Subnet 1b",
+      "Value" : {"Ref" : "PrivateSubnet1b"},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PrivateSubnet1b", {"Ref": "classB"}]]}
+      }
+    },      
+    "PrivateSubnet1c" : {
+      "Description" : "Private Subnet 1c",
+      "Value" : {"Fn::If" : ["HasThreeAZs", {"Ref" : "PrivateSubnet1c"}, "none"]},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PrivateSubnet1c", {"Ref": "classB"}]]}
+      }
+    },
+    "PrivateSubnet1d" : {
+      "Description" : "Private Subnet 1d",
+      "Value" : {"Fn::If" : ["HasFourAZs", {"Ref" : "PrivateSubnet1d"}, "none"]},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PrivateSubnet1d", {"Ref": "classB"}]]}
+      }
+    },
+    "PrivateSubnet1e" : {
+      "Description" : "Private Subnet 1e",
+      "Value" : {"Fn::If" : ["HasFiveAZs", {"Ref" : "PrivateSubnet1e"}, "none"]},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "PrivateSubnet1e", {"Ref": "classB"}]]}
+      }
     }
     
   }
