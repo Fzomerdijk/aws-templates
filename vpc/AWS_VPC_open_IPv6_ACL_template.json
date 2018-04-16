@@ -16,7 +16,7 @@
                 },
                 {
                     "Label": {
-                        "default": "NAT Configuration"
+                        "default": "IPv4 NAT Configuration"
                     },
                     "Parameters": [
                         "eAddNatGateway",
@@ -40,10 +40,10 @@
                     "default": "ClassB subnet number"
                 },                
                 "eAddNatGateway": {
-                    "default": "Add NAT Gateway"
+                    "default": "Add a IPv4 NAT Gateway"
                 },
                 "fHighAvailableNatGateway": {
-                    "default": "High Available Nat Gateway setup"
+                    "default": "High Available IPv4 Nat Gateway's"
                 },
                 "zDeveloperName": {
                     "default": ""
@@ -71,14 +71,14 @@
 
     "eAddNatGateway": {
       "Type": "String",
-      "Description": "Should we add a NAT gateway, so PRIVATE subnet can connect to internet.",
+      "Description": "Should we add a IPv4 NAT gateway, so PRIVATE subnet can connect to internet.",
       "Default": "No",
       "AllowedValues": ["No", "Yes"]
     },
     
     "fHighAvailableNatGateway": {
       "Type": "String",
-      "Description": "Only one NAT gateway (in AZ-1a) or HA setup (in all AZ's a NAT-GW).",
+      "Description": "Only one IPv4 NAT gateway (in AZ-1a) or HA setup (in all AZ's a NAT-GW).",
       "Default": "Only one",
       "AllowedValues": ["Only one", "Highly Available"]
     },
@@ -528,7 +528,7 @@
         "RuleAction": "allow",
         "RuleNumber": "100"
       }
-    },     
+    }, 
 
     "PublicAclIngress100": {
       "Type": "AWS::EC2::NetworkAclEntry",
@@ -555,7 +555,7 @@
         "RuleNumber": "200"
       }
     },     
-
+    
     "PublicAclIngress200": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],

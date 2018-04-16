@@ -204,8 +204,8 @@
       "Type": "AWS::EC2::VPC",
       "Properties": {
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "EnableDnsSupport": "true",
-        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": true,
+        "EnableDnsHostnames": true,
         "InstanceTenancy": "default",        
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "VPC", {"Ref": "classB"}]]} },
@@ -232,7 +232,10 @@
     "AttachGateway": {
       "Type": "AWS::EC2::VPCGatewayAttachment",
       "DependsOn": [ "VPC", "InternetGateway" ],
-      "Properties": { "VpcId": {"Ref": "VPC"}, "InternetGatewayId": {"Ref": "InternetGateway"}  }
+      "Properties": { 
+        "VpcId": {"Ref": "VPC"}, 
+        "InternetGatewayId": {"Ref": "InternetGateway"}  
+      }
     },
 
     "PublicSubnet1a": {
