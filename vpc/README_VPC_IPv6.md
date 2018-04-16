@@ -5,15 +5,15 @@ These templates will create a VPC with both public and private subnets. These pu
 
 IPv6 addresses are globally unique, and are therefore public by default. If you want your instance to be able to access the Internet, but you want to prevent resources on the Internet from initiating communication with your instance, you should use an egress-only Internet gateway. 
 
-These VPC templates add a egress-only Internet gateway by default, there is no option added to switch this off. This will prevents the Internet from initiating an IPv6 connection with your private instances. Still you can switch off the IPv4 (IP version four) NAT gateways, so private instances are not able to connect to the Internet via IPv4. But this does not prevent your private instances to communicate to the internet over IPv6. If you want to block all IPv6 communication to private subnets, you need to do this via ACL and route tables.
+These VPC templates add a egress-only Internet gateway by default. This will prevents the Internet from initiating an IPv6 connection with your private instances. Still you can switch off the IPv4 (IP version four) NAT gateways, so private instances are not able to connect to the Internet via IPv4. But this does not prevent your private instances to communicate to the internet over IPv6. If you want to block all IPv6 communication to private subnets, you need to do this via ACL and route tables.
 
 Currently we have these versions of the template:
 
-* [VPC with open Access Control Lists (ACL)](./AWS_VPC_open_IPv6_ACL_template)
+* [VPC with open Access Control Lists (ACL)](./AWS_VPC_open_IPv6_ACL_template.json)
 
 This is a template that contains a VPC with public and private Access Control Lists, but these ACL's do not have any restriction. So it is up to you to setup appropriate rules!  
 
-* [VPC with strict Access Control List (ACL)](./AWS_VPC_strict_IPv6_ACL_template)
+* [VPC with strict Access Control List (ACL)](./AWS_VPC_strict_IPv6_ACL_template.json)
 
 In this template the Access Control Lists (ACL) are accoding to the <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_NACLs.html#VPC_Appendix_NACLs_Scenario_2?raw=true" target="_blank">AWS recommended settings</a>, 
 for a VPC with both public and private subnets.
@@ -37,9 +37,40 @@ An Internet gateway supports IPv4 and IPv6 traffic for your public subnets / ins
 
 See also <a href="./images/Create-Stack-Parameters.png?raw=true" target="_blank">this screen shot</a> for the options.
 
-
+### IPv4 adress ranges
+Where "**xxx**" is the ClassB subnet number option as given in the template parameter section
+|        Name       |          Value          |     Example     | Additional description       |
+| ----------------- | ----------------------- | --------------- | ---------------------------- |
+| VPC               | 10.*xxx*.0.0/16           | 10.33.0.0/16    | 
+| PublicSubnet1a    | 10.*xxx*.0.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
+| PublicSubnet1b    | 10.*xxx*.1.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
+| PublicSubnet1c    | 10.*xxx*.2.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
+| PublicSubnet1d    | 10.*xxx*.3.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
+| PublicSubnet1e    | 10.*xxx*.4.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
+| PrivateSubnet1a   | 10.*xxx*.5.0/24           | 10.33.5.0/24    | Max. 251 IPv4 adresses       |
+| PrivateSubnet1b   | 10.*xxx*.6.0/24           | 10.33.6.0/24    | Max. 251 IPv4 adresses       |
+| PrivateSubnet1c   | 10.*xxx*.7.0/24           | 10.33.7.0/24    | Max. 251 IPv4 adresses       |
+| PrivateSubnet1d   | 10.*xxx*.8.0/24           | 10.33.8.0/24    | Max. 251 IPv4 adresses       |
+| PrivateSubnet1e   | 10.*xxx*.9.0/24           | 10.33.9.0/24    | Max. 251 IPv4 adresses       |
+	
+### IPv6 adress ranges
+Note that the IPv6 ranges can not be constructed but are dynamicaly created by AWS.
+|        Name       |          Value          |          Example         | 
+| ----------------- | ----------------------- | ------------------------ | 
+| VPC               | ...:...:...:..00::/56   | 2a05:d014:640:8100::/56  | 
+| PublicSubnet1a    | ...:...:...:..01::/64   | 2a05:d014:640:8101::/64  |
+| PublicSubnet1b    | ...:...:...:..02::/64   | 2a05:d014:640:8102::/64  |
+| PublicSubnet1c    | ...:...:...:..03::/64   | 2a05:d014:640:8103::/64  | 
+| PublicSubnet1d    | ...:...:...:..04::/64   | 2a05:d014:640:8104::/64  | 
+| PublicSubnet1e    | ...:...:...:..05::/64   | 2a05:d014:640:8105::/64  | 
+| PrivateSubnet1a   | ...:...:...:..06::/64   | 2a05:d014:640:8106::/64  | 
+| PrivateSubnet1b   | ...:...:...:..07::/64   | 2a05:d014:640:8107::/64  | 
+| PrivateSubnet1c   | ...:...:...:..08::/64   | 2a05:d014:640:8107::/64  | 
+| PrivateSubnet1d   | ...:...:...:..09::/64   | 2a05:d014:640:8109::/64  | 
+| PrivateSubnet1e   | ...:...:...:..10::/64   | 2a05:d014:640:8110::/64  | 
+	
 ## VPC with public and private subnets - no NAT gateway
-If you want to create a VPC with both public and private subnets in all availability zones in a region. But the private subnets do NOT need any internet access. You can use the template with the parameter **Add NAT Gateway** set to **No**
+If you want to create a VPC with both public and private subnets in all availability zones in a region. But the private subnets do NOT need any IPv4 internet access. You can use the template with the parameter **Add NAT Gateway** set to **No**
 
 ![Architecture](./images/VPC-Private-No-Internet-access-four-regions.png?raw=true "VPC, private subnets has no internet connectivity")
 
