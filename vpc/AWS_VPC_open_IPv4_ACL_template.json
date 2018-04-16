@@ -191,8 +191,8 @@
       "Type": "AWS::EC2::VPC",
       "Properties": {
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "EnableDnsSupport": "true",
-        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": true,
+        "EnableDnsHostnames": true,
         "InstanceTenancy": "default",        
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "VPC", {"Ref": "classB"}]]} },
@@ -496,7 +496,7 @@
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
         "CidrBlock": "0.0.0.0/0",
-        "Egress": "True",
+        "Egress": true,
         "NetworkAclId": {"Ref": "PublicNetworkAcl"},
         "Protocol": "-1",
         "RuleAction": "allow",
@@ -509,7 +509,7 @@
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
         "CidrBlock": "0.0.0.0/0",
-        "Egress": "false",
+        "Egress": false,
         "NetworkAclId": {"Ref": "PublicNetworkAcl"},
         "Protocol": "-1",
         "RuleAction": "allow",
@@ -714,7 +714,7 @@
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
         "CidrBlock": "0.0.0.0/0",
-        "Egress": "True",
+        "Egress": true,
         "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
         "Protocol": "-1",
         "RuleAction": "allow",
@@ -727,7 +727,7 @@
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Egress": "false",
+        "Egress": false,
         "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
         "Protocol": "-1",
         "RuleAction": "allow",
@@ -741,7 +741,7 @@
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
         "CidrBlock": "0.0.0.0/0",
-        "Egress": "false",
+        "Egress": false,
         "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
         "Protocol": "6",
         "PortRange": {"From": "1024", "To": "65535"},

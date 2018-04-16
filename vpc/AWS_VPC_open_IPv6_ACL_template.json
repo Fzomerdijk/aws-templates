@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "VPC and subnet creation - v1.0 - 2-5 AZs  (Publ. GateWay, RouteTables, Strict ACLs and NAT-GateWay(s)",
+  "Description": "VPC and subnet creation (IPv4 & IPv6) - v1.0 - 2-5 AZs Publ. (EgressOnly-)Gateways, RouteTables, ACLs and NAT-GateWay(s)",
 
     "Metadata": {
         "AWS::CloudFormation::Interface": {
@@ -11,9 +11,7 @@
                     },
                     "Parameters": [
                         "aEnvironmentType",
-                        "classB",
-                        "dIpRangeForEC2InstSSH",
-                        "eAddExternalIP"
+                        "classB"
                     ]
                 },
                 {
@@ -40,13 +38,7 @@
                 },
                 "classB": {
                     "default": "ClassB subnet number"
-                },
-                "dIpRangeForEC2InstSSH": {
-                    "default": "IP range for SSH/RDP access"
-                },
-                "eAddExternalIP": {
-                    "default": "Add external IP by default"
-                },
+                },                
                 "eAddNatGateway": {
                     "default": "Add NAT Gateway"
                 },
@@ -76,23 +68,7 @@
         "MaxLength": "3",
         "Default": "..."
     },
-    
-    "dIpRangeForEC2InstSSH": {
-      "Description": "IP range of your home/business network, to allow SSH or RDP access",
-      "Type": "String",
-      "Default": "255.255.255.0/32",
-      "MinLength": "9",
-      "MaxLength": "18",
-      "AllowedPattern": "^([0-9]+\\.){3}[0-9]+\\/[0-9]+$"
-    },
-        
-    "eAddExternalIP": {
-      "Type": "String",
-      "Description": "Should we (by default) add an external IP in PUBLIC subnet(s)?",
-      "Default": "No",
-      "AllowedValues": ["No", "Yes"]
-    },
-        
+
     "eAddNatGateway": {
       "Type": "String",
       "Description": "Should we add a NAT gateway, so PRIVATE subnet can connect to internet.",
@@ -117,7 +93,7 @@
   
   "Mappings": {
     "RegionMapMinNrAZs": {
-      "us-east-1": {"AZs": "6"},
+      "us-east-1": {"AZs": "5"},
       "us-east-2": {"AZs": "3"},
       "us-west-1": {"AZs": "2"},
       "us-west-2": {"AZs": "3"},
@@ -152,8 +128,6 @@
         
     "HasFiveAZs": {"Fn::Equals": [ {"Fn::FindInMap": ["RegionMapMinNrAZs", {"Ref": "AWS::Region"}, "AZs"]}, "5"] },
     
-    "publicIpOnLaunch": {"Fn::Equals": ["Yes", {"Ref": "eAddExternalIP"}]},
-
     "AddNatGW": {"Fn::Equals": ["Yes", {"Ref": "eAddNatGateway"}]},
 
     "natGWHighlyAvailable": 
@@ -204,8 +178,8 @@
       "Type": "AWS::EC2::VPC",
       "Properties": {
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "EnableDnsSupport": "true",
-        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": true,
+        "EnableDnsHostnames": true,
         "InstanceTenancy": "default",        
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "VPC", {"Ref": "classB"}]]} },
@@ -216,6 +190,14 @@
       }
     },  
 
+    "Ipv6VPCCidrBlock": {
+      "Type": "AWS::EC2::VPCCidrBlock",
+      "Properties": {
+        "AmazonProvidedIpv6CidrBlock": true,
+        "VpcId": { "Ref" : "VPC" }
+      }
+    },
+  
     "InternetGateway": {
       "Type": "AWS::EC2::InternetGateway",
       "DependsOn": "VPC",
@@ -232,17 +214,29 @@
     "AttachGateway": {
       "Type": "AWS::EC2::VPCGatewayAttachment",
       "DependsOn": [ "VPC", "InternetGateway" ],
-      "Properties": { "VpcId": {"Ref": "VPC"}, "InternetGatewayId": {"Ref": "InternetGateway"}  }
+      "Properties": { 
+        "VpcId": {"Ref": "VPC"}, 
+        "InternetGatewayId": {"Ref": "InternetGateway"}  
+      }
+    },
+
+   "EgressOnlyInternetGateway": {
+      "Type": "AWS::EC2::EgressOnlyInternetGateway",
+      "DependsOn": "VPC",
+      "Properties": {
+        "VpcId": {"Ref": "VPC"}
+      }
     },
 
     "PublicSubnet1a": {
       "Type": "AWS::EC2::Subnet",
-      "DependsOn": "AttachGateway",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock", "AttachGateway"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"01::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "0", { "Fn::GetAZs": "" } ]},
-        "MapPublicIpOnLaunch": {"Fn::If": ["publicIpOnLaunch", true, false]},
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1a", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation"},
@@ -255,12 +249,13 @@
     
     "PublicSubnet1b": {
       "Type": "AWS::EC2::Subnet",
-      "DependsOn": "AttachGateway",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock", "AttachGateway"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".1.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"02::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "1", { "Fn::GetAZs": "" } ]},
-        "MapPublicIpOnLaunch": {"Fn::If": ["publicIpOnLaunch", true, false]},
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1b", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation"},
@@ -274,12 +269,13 @@
     "PublicSubnet1c": {
       "Type": "AWS::EC2::Subnet",
       "Condition": "HasThreeAZs",      
-      "DependsOn": "AttachGateway",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock", "AttachGateway"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".2.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"03::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "2", { "Fn::GetAZs": "" } ] },
-        "MapPublicIpOnLaunch": {"Fn::If": ["publicIpOnLaunch", true, false]},
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1c", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation" },
@@ -293,12 +289,13 @@
     "PublicSubnet1d": {
       "Type": "AWS::EC2::Subnet",
       "Condition": "HasFourAZs",      
-      "DependsOn": "AttachGateway",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock", "AttachGateway"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".3.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"04::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
-        "MapPublicIpOnLaunch": {"Fn::If": ["publicIpOnLaunch", true, false]},
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1d", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation" },
@@ -312,12 +309,13 @@
     "PublicSubnet1e": {
       "Type": "AWS::EC2::Subnet",
       "Condition": "HasFiveAZs",      
-      "DependsOn": "AttachGateway",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock", "AttachGateway"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".4.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"05::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
-        "MapPublicIpOnLaunch": {"Fn::If": ["publicIpOnLaunch", true, false]},
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Public Subnet 1e", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation" },
@@ -331,12 +329,13 @@
     
     "PrivateSubnet1a": {
       "Type": "AWS::EC2::Subnet",
-      "DependsOn": "VPC",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".5.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"06::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "0", { "Fn::GetAZs": "" } ]},
-        "MapPublicIpOnLaunch": false,
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1a", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation"},
@@ -349,12 +348,13 @@
     
     "PrivateSubnet1b": {
       "Type": "AWS::EC2::Subnet",
-      "DependsOn": "VPC",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".6.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"07::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "1", { "Fn::GetAZs": "" } ]},
-        "MapPublicIpOnLaunch": false,
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1b", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation"},
@@ -368,12 +368,13 @@
     "PrivateSubnet1c": {
       "Type": "AWS::EC2::Subnet",
       "Condition": "HasThreeAZs",      
-      "DependsOn": "VPC",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".7.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"08::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "2", { "Fn::GetAZs": "" } ] },
-        "MapPublicIpOnLaunch": false,
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1c", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation" },
@@ -387,12 +388,13 @@
     "PrivateSubnet1d": {
       "Type": "AWS::EC2::Subnet",
       "Condition": "HasFourAZs",      
-      "DependsOn": "VPC",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".8.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"09::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
-        "MapPublicIpOnLaunch": false,
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1d", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation" },
@@ -406,12 +408,13 @@
     "PrivateSubnet1e": {
       "Type": "AWS::EC2::Subnet",
       "Condition": "HasFiveAZs",      
-      "DependsOn": "VPC",
+      "DependsOn": ["VPC", "Ipv6VPCCidrBlock"],
       "Properties": {
         "VpcId": { "Ref": "VPC" },
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".9.0/24"]]},
+        "AssignIpv6AddressOnCreation" : true,
+        "Ipv6CidrBlock": {"Fn::Join": ["", [{"Fn::Select": [0,{"Fn::Split": ["00::/56",{"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]}]}]},"10::/64"]]},
         "AvailabilityZone": { "Fn::Select": [ "3", { "Fn::GetAZs": "" } ] },
-        "MapPublicIpOnLaunch": false,
         "Tags": [
           { "Key": "Name", "Value": {"Fn::Join": [ " ", [{"Ref": "aEnvironmentType"}, "Private Subnet 1e", {"Ref": "classB"}]]} },
           { "Key": "Owner","Value": "Cloudformation" },
@@ -446,6 +449,16 @@
         "GatewayId": { "Ref": "InternetGateway" }
       }
     },
+    "PublicRouteIPv6": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": [ "VPC", "PublicRouteTable", "AttachGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PublicRouteTable" },
+        "DestinationIpv6CidrBlock": "::/0", 
+        "GatewayId": {"Ref": "InternetGateway"}
+      }
+    },
+
     "PublicSubnet1aRouteTableAssociation": {
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
       "DependsOn": [ "PublicRouteTable", "PublicSubnet1a", "AttachGateway" ],
@@ -508,165 +521,57 @@
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
-        "Egress": "true",
-        "RuleNumber": "100",
         "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 80, "To": 80},
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "-1",
         "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+        "RuleNumber": "100"
       }
     },     
-    "PublicAclEgress110": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "110",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 443, "To": 443},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress120": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "120",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 1433, "To": 1433},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress130": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "130",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 3306, "To": 3306},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress140": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "140",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 49152, "To": 65535},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress150": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "150",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 22, "To": 22},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress160": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "160",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 3389, "To": 3389},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    
 
     "PublicAclIngress100": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
-        "Egress": "false",
-        "RuleNumber": "100",
         "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 80, "To": 80},
+        "Egress": false,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "-1",
         "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+        "RuleNumber": "100"
       }
     },     
-    "PublicAclIngress110": {
+
+    "PublicAclEgress200": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
-        "Egress": "false",
-        "RuleNumber": "110",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 443, "To": 443},
+        "Ipv6CidrBlock": "::/0",
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "-1",
         "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+        "RuleNumber": "200"
       }
     },     
-    "PublicAclIngress120": {
+
+    "PublicAclIngress200": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
-        "Egress": "false",
-        "RuleNumber": "120",
-        "CidrBlock": {"Ref": "dIpRangeForEC2InstSSH"},
-        "Protocol": "6",
-        "PortRange": {"From": 22, "To": 22},
+        "Ipv6CidrBlock": "::/0",
+        "Egress": false,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "-1",
         "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+        "RuleNumber": "200"
       }
     },     
-    "PublicAclIngress130": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "false",
-        "RuleNumber": "130",
-        "CidrBlock": {"Ref": "dIpRangeForEC2InstSSH"},
-        "Protocol": "6",
-        "PortRange": {"From": 3389, "To": 3389},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclIngress140": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": "false",
-        "RuleNumber": "140",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 1024, "To": 65535},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    
 
     "PublicSubnet1aNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1a", "PublicAclEgress100", "PublicAclIngress100" ],
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1a" ],
       "Properties": {
          "SubnetId": {"Ref": "PublicSubnet1a"},
          "NetworkAclId": {"Ref": "PublicNetworkAcl"}
@@ -674,7 +579,7 @@
     },    
     "PublicSubnet1bNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1b", "PublicAclEgress100", "PublicAclIngress100" ],
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1b" ],
       "Properties": {
          "SubnetId": {"Ref": "PublicSubnet1b"},
          "NetworkAclId": {"Ref": "PublicNetworkAcl"}
@@ -683,7 +588,7 @@
     "PublicSubnet1cNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
       "Condition": "HasThreeAZs",      
-      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1c", "PublicAclEgress100", "PublicAclIngress100" ],
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1c" ],
       "Properties": {
          "SubnetId": {"Ref": "PublicSubnet1c"},
          "NetworkAclId": {"Ref": "PublicNetworkAcl"}
@@ -692,7 +597,7 @@
     "PublicSubnet1dNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
       "Condition": "HasFourAZs",      
-      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1d", "PublicAclEgress100", "PublicAclIngress100" ],
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1d" ],
       "Properties": {
          "SubnetId": {"Ref": "PublicSubnet1d"},
          "NetworkAclId": {"Ref": "PublicNetworkAcl"}
@@ -701,7 +606,7 @@
     "PublicSubnet1eNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
       "Condition": "HasFiveAZs",      
-      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1e", "PublicAclEgress100", "PublicAclIngress100" ],
+      "DependsOn": [ "PublicNetworkAcl", "PublicSubnet1e" ],
       "Properties": {
          "SubnetId": {"Ref": "PublicSubnet1e"},
          "NetworkAclId": {"Ref": "PublicNetworkAcl"}
@@ -723,6 +628,15 @@
         ]
       }
     },
+    "PrivateRouteIPv6": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": [ "PrivateRouteTable", "EgressOnlyInternetGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable" },
+        "DestinationIpv6CidrBlock": "::/0", 
+        "EgressOnlyInternetGatewayId": {"Ref": "EgressOnlyInternetGateway"}
+      }
+    },
 
     "PrivateRouteTable1a": {
       "Type": "AWS::EC2::RouteTable",
@@ -736,6 +650,16 @@
           { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
           { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
         ]
+      }
+    },
+    "PrivateRouteIPv61a": {
+      "Type": "AWS::EC2::Route",
+      "Condition": "natGWHighlyAvailable",      
+      "DependsOn": [ "PrivateRouteTable1a", "EgressOnlyInternetGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable1a" },
+        "DestinationIpv6CidrBlock": "::/0", 
+        "EgressOnlyInternetGatewayId": {"Ref": "EgressOnlyInternetGateway"}
       }
     },
 
@@ -753,6 +677,16 @@
         ]
       }
     },
+    "PrivateRouteIPv61b": {
+      "Type": "AWS::EC2::Route",
+      "Condition": "natGWHighlyAvailable",      
+      "DependsOn": [ "PrivateRouteTable1b", "EgressOnlyInternetGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable1b" },
+        "DestinationIpv6CidrBlock": "::/0", 
+        "EgressOnlyInternetGatewayId": {"Ref": "EgressOnlyInternetGateway"}
+      }
+    },
 
     "PrivateRouteTable1c": {
       "Type": "AWS::EC2::RouteTable",
@@ -766,6 +700,16 @@
           { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
           { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
         ]
+      }
+    },
+    "PrivateRouteIPv61c": {
+      "Type": "AWS::EC2::Route",
+      "Condition": "HasThreeAZsAndNatGWHighlyAvailable",      
+      "DependsOn": [ "PrivateRouteTable1c", "EgressOnlyInternetGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable1c" },
+        "DestinationIpv6CidrBlock": "::/0", 
+        "EgressOnlyInternetGatewayId": {"Ref": "EgressOnlyInternetGateway"}
       }
     },
 
@@ -783,6 +727,16 @@
         ]
       }
     },
+    "PrivateRouteIPv61d": {
+      "Type": "AWS::EC2::Route",
+      "Condition": "HasFourAZsAndNatGWHighlyAvailable",      
+      "DependsOn": [ "PrivateRouteTable1d", "EgressOnlyInternetGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable1d" },
+        "DestinationIpv6CidrBlock": "::/0", 
+        "EgressOnlyInternetGatewayId": {"Ref": "EgressOnlyInternetGateway"}
+      }
+    },
 
     "PrivateRouteTable1e": {
       "Type": "AWS::EC2::RouteTable",
@@ -796,6 +750,16 @@
           { "Key": "Developer","Value": {"Ref": "zDeveloperName"} },
           { "Key": "Environment", "Value": {"Ref": "aEnvironmentType"} }
         ]
+      }
+    },
+    "PrivateRouteIPv61e": {
+      "Type": "AWS::EC2::Route",
+      "Condition": "HasFiveAZsAndNatGWHighlyAvailable",     
+      "DependsOn": [ "PrivateRouteTable1e", "EgressOnlyInternetGateway"],
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable1e" },
+        "DestinationIpv6CidrBlock": "::/0", 
+        "EgressOnlyInternetGatewayId": {"Ref": "EgressOnlyInternetGateway"}
       }
     },
     
@@ -858,118 +822,48 @@
     
     "PrivateAclEgress100": {
       "Type": "AWS::EC2::NetworkAclEntry",
-      "Condition":  "AddNatGW",      
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
-        "Egress": "true",
-        "RuleNumber": "100",
         "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 80, "To": 80},
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "-1",
         "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+        "RuleNumber": "100"
       }
-    },
-    "PrivateAclEgress110": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "Condition":  "AddNatGW",      
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "110",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 443, "To": 443},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },
-    "PrivateAclEgress120": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": "true",
-        "RuleNumber": "120",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 49152, "To": 65535},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },
-    
+    },     
+
     "PrivateAclIngress100": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
-        "Egress": "false",
-        "RuleNumber": "100",
         "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 1433, "To": 1433},
+        "Egress": false,
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "-1",
         "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+        "RuleNumber": "100"
       }
     },     
-    "PrivateAclIngress110": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": "false",
-        "RuleNumber": "110",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 3306, "To": 3306},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },     
-    "PrivateAclIngress120": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": "false",
-        "RuleNumber": "120",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 22, "To": 22},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },     
-    "PrivateAclIngress130": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": "false",
-        "RuleNumber": "130",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 3389, "To": 3389},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },     
-    "PrivateAclIngress140": {
+
+    "PrivateAclIngress200": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "Condition":  "AddNatGW",
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
-        "Egress": "false",
-        "RuleNumber": "140",
         "CidrBlock": "0.0.0.0/0",
+        "Egress": false,
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
         "Protocol": "6",
-        "PortRange": {"From": 1024, "To": 65535},
+        "PortRange": {"From": "1024", "To": "65535"},
         "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+        "RuleNumber": "200"
       }
     },     
 
     "PrivateSubnet1aNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-      "DependsOn": ["PrivateNetworkAcl", "PrivateSubnet1a", "PrivateAclEgress120", 
-                    "PrivateAclIngress100", "PrivateAclIngress110", "PrivateAclIngress120", "PrivateAclIngress130" 
-      ],
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1a", "PrivateAclEgress100", "PrivateAclIngress100" ],
       "Properties": {
          "SubnetId": {"Ref": "PrivateSubnet1a"},
          "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
@@ -977,9 +871,7 @@
     },    
     "PrivateSubnet1bNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1b", "PrivateAclEgress120", 
-                    "PrivateAclIngress100", "PrivateAclIngress110", "PrivateAclIngress120", "PrivateAclIngress130" 
-      ],
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1b", "PrivateAclEgress100", "PrivateAclIngress100" ],
       "Properties": {
          "SubnetId": {"Ref": "PrivateSubnet1b"},
          "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
@@ -988,9 +880,7 @@
     "PrivateSubnet1cNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
       "Condition": "HasThreeAZs",      
-      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1c", "PrivateAclEgress120", 
-                    "PrivateAclIngress100", "PrivateAclIngress110", "PrivateAclIngress120", "PrivateAclIngress130" 
-      ],
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1c", "PrivateAclEgress100", "PrivateAclIngress100" ],
       "Properties": {
          "SubnetId": {"Ref": "PrivateSubnet1c"},
          "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
@@ -999,9 +889,7 @@
     "PrivateSubnet1dNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
       "Condition": "HasFourAZs",      
-      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1d", "PrivateAclEgress120", 
-                    "PrivateAclIngress100", "PrivateAclIngress110", "PrivateAclIngress120", "PrivateAclIngress130" 
-      ],
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1d", "PrivateAclEgress100", "PrivateAclIngress100" ],
       "Properties": {
          "SubnetId": {"Ref": "PrivateSubnet1d"},
          "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
@@ -1010,9 +898,7 @@
     "PrivateSubnet1eNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
       "Condition": "HasFiveAZs",      
-      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1e", "PrivateAclEgress120", 
-                    "PrivateAclIngress100", "PrivateAclIngress110", "PrivateAclIngress120", "PrivateAclIngress130" 
-      ],
+      "DependsOn": [ "PrivateNetworkAcl", "PrivateSubnet1e", "PrivateAclEgress100", "PrivateAclIngress100" ],
       "Properties": {
          "SubnetId": {"Ref": "PrivateSubnet1e"},
          "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
@@ -1170,6 +1056,13 @@
       "Value": { "Ref": "VPC"},
       "Export": {
         "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "VPC", {"Ref": "classB"}]]}
+      }
+    },
+   "VpcIpv6CidrBlock": { 
+      "Description": "VpcIpv6CidrBlock", 
+      "Value": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
+      "Export": {
+        "Name": {"Fn::Join": [ "-", [{"Ref": "aEnvironmentType"}, "VPC", {"Ref": "classB"}, "Ipv6Block"]]}
       }
     },
     "VPCGateWay": { 
