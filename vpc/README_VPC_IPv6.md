@@ -39,22 +39,24 @@ See also <a href="./images/Create-Stack-Parameters.png?raw=true" target="_blank"
 
 ### IPv4 adress ranges
 Where "**xxx**" is the ClassB subnet number option as given in the template parameter section
-|        Name       |          Value          |     Example     | Additional description       |
-| ----------------- | ----------------------- | --------------- | ---------------------------- |
-| VPC               | 10.*xxx*.0.0/16           | 10.33.0.0/16    | 
-| PublicSubnet1a    | 10.*xxx*.0.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
-| PublicSubnet1b    | 10.*xxx*.1.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
-| PublicSubnet1c    | 10.*xxx*.2.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
-| PublicSubnet1d    | 10.*xxx*.3.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
-| PublicSubnet1e    | 10.*xxx*.4.0/24           | 10.33.2.0/24    | Max. 251 IPv4 adresses       |
-| PrivateSubnet1a   | 10.*xxx*.5.0/24           | 10.33.5.0/24    | Max. 251 IPv4 adresses       |
-| PrivateSubnet1b   | 10.*xxx*.6.0/24           | 10.33.6.0/24    | Max. 251 IPv4 adresses       |
-| PrivateSubnet1c   | 10.*xxx*.7.0/24           | 10.33.7.0/24    | Max. 251 IPv4 adresses       |
-| PrivateSubnet1d   | 10.*xxx*.8.0/24           | 10.33.8.0/24    | Max. 251 IPv4 adresses       |
-| PrivateSubnet1e   | 10.*xxx*.9.0/24           | 10.33.9.0/24    | Max. 251 IPv4 adresses       |
+
+|        Name       |      Value        |     Example    | Additional description  |
+| ----------------- | ----------------- | -------------- | ----------------------- |
+| VPC               | 10.*xxx*.0.0/16   | 10.33.0.0/16   |                         |
+| PublicSubnet1a    | 10.*xxx*.0.0/24   | 10.33.2.0/24   | Max. 251 IPv4 adresses  |
+| PublicSubnet1b    | 10.*xxx*.1.0/24   | 10.33.2.0/24   | Max. 251 IPv4 adresses  |
+| PublicSubnet1c    | 10.*xxx*.2.0/24   | 10.33.2.0/24   | Max. 251 IPv4 adresses  |
+| PublicSubnet1d    | 10.*xxx*.3.0/24   | 10.33.2.0/24   | Max. 251 IPv4 adresses  |
+| PublicSubnet1e    | 10.*xxx*.4.0/24   | 10.33.2.0/24   | Max. 251 IPv4 adresses  |
+| PrivateSubnet1a   | 10.*xxx*.5.0/24   | 10.33.5.0/24   | Max. 251 IPv4 adresses  |
+| PrivateSubnet1b   | 10.*xxx*.6.0/24   | 10.33.6.0/24   | Max. 251 IPv4 adresses  |
+| PrivateSubnet1c   | 10.*xxx*.7.0/24   | 10.33.7.0/24   | Max. 251 IPv4 adresses  |
+| PrivateSubnet1d   | 10.*xxx*.8.0/24   | 10.33.8.0/24   | Max. 251 IPv4 adresses  |
+| PrivateSubnet1e   | 10.*xxx*.9.0/24   | 10.33.9.0/24   | Max. 251 IPv4 adresses  |
 	
 ### IPv6 adress ranges
 Note that the IPv6 ranges can not be constructed but are dynamicaly created by AWS.
+
 |        Name       |          Value          |          Example         | 
 | ----------------- | ----------------------- | ------------------------ | 
 | VPC               | ...:...:...:..00::/56   | 2a05:d014:640:8100::/56  | 
