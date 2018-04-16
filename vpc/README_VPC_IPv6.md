@@ -1,35 +1,38 @@
-# AWS Virtual Private Cloud (VPC) template IPv4 only
+# AWS Virtual Private Cloud (VPC) template IPv4 and IPv6 support
 Within Amazon Web Services a default VPC is available to you, but all subnets are public facing (no public subnets are created) and ready-to-go template of a VPC with public- and private-subnets are hard to find. 
-This template will create a VPC with both public and private subnets. 
-These public and private subnets will be created in ALL the availability zones that are present (April 2017) within the chosen region. The template is configurable via parameters so you can use the same template throughout in all environments.
+
+These templates will create a VPC with both public and private subnets. These public and private subnets will be created in all the availability zones that are present (April 2017) within the chosen region. The template is configurable via parameters so you can use the same template throughout in all environments.
+
+IPv6 addresses are globally unique, and are therefore public by default. If you want your instance to be able to access the Internet, but you want to prevent resources on the Internet from initiating communication with your instance, you should use an egress-only Internet gateway. 
+
+These VPC templates add a egress-only Internet gateway by default, there is no option added to switch this off. This will prevents the Internet from initiating an IPv6 connection with your private instances. Still you can switch off the IPv4 (IP version four) NAT gateways, so private instances are not able to connect to the Internet via IPv4. But this does not prevent your private instances to communicate to the internet over IPv6. If you want to block all IPv6 communication to private subnets, you need to do this via ACL and route tables.
 
 Currently we have these versions of the template:
 
-* [VPC IPv4 with open Access Control Lists (ACL)](./AWS_VPC_open_IPv4_ACL_template)
+* [VPC with open Access Control Lists (ACL)](./AWS_VPC_open_IPv6_ACL_template)
 
 This is a template that contains a VPC with public and private Access Control Lists, but these ACL's do not have any restriction. So it is up to you to setup appropriate rules!  
 
-* [VPC IPv4 with strict Access Control List (ACL)](./AWS_VPC_strict_IPv4_ACL_template)
+* [VPC with strict Access Control List (ACL)](./AWS_VPC_strict_IPv6_ACL_template)
 
 In this template the Access Control Lists (ACL) are accoding to the <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_NACLs.html#VPC_Appendix_NACLs_Scenario_2?raw=true" target="_blank">AWS recommended settings</a>, 
 for a VPC with both public and private subnets.
 
-For AWS VPC templates supporting both IPv4 anbd IPv6, see : [VPC - Both IPv4 & IPv6 addresses support templates](./README_VPC_IPv6.md)
-
 ### Explanation of terms used
-* Public subnet – can connect to the internet through an Internet Gateway. Instances in a public subnet require public IP's to connect to the internet.
+* Public subnet – can connect to the internet through an Internet Gateway. Instances in a public subnet require public IPv4's to connect to the internet. 
 * Private subnet – cannot directly connect to the internet by default. Traffic needs to be routed via a NAT gateway (placed in a public subnet). Private subnet instances only need a private IP.
-* <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Internet_Gateway.html" target="_blank">AWS Internet Gateway</a> - An AWS Internet Gateway is a horizontally scaled, redundant, and highly available VPC component that allows communication between instances in your VPC and the Internet.
+* IPv4 vs IPv6 - Where IPv6 network addresses are globally unique and are therefore public by default. A extra "Egress-Only Internet Gateways" is nessasary to block incoming traffic while still allowing outbound traffic for private subnets / instances.
+* <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Internet_Gateway.html" target="_blank">AWS Internet Gateway</a> - An Internet gateway is a horizontally scaled, redundant, and highly available VPC component that allows communication between instances in your VPC and the Internet. It therefore imposes no availability risks or bandwidth constraints on your network traffic.
+An Internet gateway serves two purposes: to provide a target in your VPC route tables for Internet-routable traffic, and to perform network address translation (NAT) for instances that have been assigned public IPv4 addresses.
+An Internet gateway supports IPv4 and IPv6 traffic for your public subnets / instances.
 * <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-nat-gateway.html" target="_blank">AWS NAT Gateway </a> - You can use a network address translation (NAT) gateway to enable instances in a private subnet to connect to the Internet or other AWS services, but prevent the Internet from initiating a connection with those instances.
-
-Note: This template cannot be used if your instances only have a IPv6 network interface. In that case, a <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/egress-only-internet-gateway.html" target="_blank">AWS Egress-Only Internet Gateway</a> should be used instead of a (IPv4) NAT instance.
+* <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/egress-only-internet-gateway.html" target="_blank">AWS Egress-Only Internet Gateways</a> - An egress-only Internet gateway is a horizontally scaled, redundant, and highly available VPC component that allows outbound communication over IPv6 from instances in your VPC to the Internet, and prevents the Internet from initiating an IPv6 connection with your instances.
 
 ## Parameters
 1. **Environment Type** - A Select list (Dev, ACC, PROD) used to “tag” the resources created. Note: once VPC is created, this option cannot be changed.
 1. **ClassB subnet number** - A number between 0 and 255 used for the IPv4 IP range of the VPC and subnets (10.xxx.0.0/16). Note: once VPC is created, this option cannot be changed.
-1. **Add external IP by default** - No / Yes - Should we (by default) add an external IP in PUBLIC subnet(s)? 
-1. **Add NAT Gateway** - No / Yes - Should we add a NAT gateway, so instances in the PRIVATE subnet can connect to internet.
-1. **High Available Nat Gateway setup** - Only one NAT gateway or High Available setup (in all AZ's a NAT-GW). This option only applies when the option Add NAT Gateway is set to “Yes”
+1. **Add IPv4 NAT Gateway** - No / Yes - Should we add a IPv4 NAT gateway, so instances in the PRIVATE subnet can connect to internet.
+1. **High Available IPv4 Nat Gateway setup** - Only one IPv4 NAT gateway or High Available setup (in all AZ's a NAT-GW). This option only applies when the option Add NAT Gateway is set to “Yes”
 1. **Resource Tagging** - A name, saved with created resources.
 
 See also <a href="./images/Create-Stack-Parameters.png?raw=true" target="_blank">this screen shot</a> for the options.
