@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "VPC and subnet creation (IPv4 & IPv6) - v1.0 - 2-5 AZs Publ. (EgressOnly-)Gateways, RouteTables, ACLs and NAT-GateWay(s)",
+  "Description": "VPC and subnet creation (IPv4 & IPv6) - v1.1 - 2-5 AZs Publ. (EgressOnly-)Gateways, RouteTables, ACLs and NAT-GateWay(s)",
 
     "Metadata": {
         "AWS::CloudFormation::Interface": {
@@ -530,164 +530,6 @@
        }
     },
     
-    "PublicAclEgress100": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "100",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 80, "To": 80},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress110": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "110",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 443, "To": 443},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress120": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "120",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 1433, "To": 1433},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress130": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "130",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 3306, "To": 3306},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress140": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "140",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 49152, "To": 65535},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress150": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "150",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 22, "To": 22},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-    "PublicAclEgress160": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "160",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 3389, "To": 3389},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
-      }
-    },     
-
-    "PublicAclEgress200": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": "::/0",
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 80, "To": 80},
-        "RuleAction": "allow",
-        "RuleNumber": "200"
-      }
-    },    
-    "PublicAclEgress210": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": "::/0",
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 443, "To": 443},
-        "RuleAction": "allow",
-        "RuleNumber": "210"
-      }
-    }, 
-    "PublicAclEgress220": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 1433, "To": 1433},
-        "RuleAction": "allow",
-        "RuleNumber": "220"
-      }
-    },
-    "PublicAclEgress230": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": "::/0",
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 32768, "To": 65535},
-        "RuleAction": "allow",
-        "RuleNumber": "230"
-      }
-    },
-    "PublicAclEgress240": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 22, "To": 22},
-        "RuleAction": "allow",
-        "RuleNumber": "240"
-      }
-    },
-
     "PublicAclIngress100": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
@@ -754,7 +596,7 @@
       }
     },     
 
-    "PublicAclIngress200": {
+    "PublicAclIngress150": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
@@ -764,10 +606,10 @@
         "Protocol": "6",
         "PortRange": {"From": 80, "To": 80},
         "RuleAction": "allow",
-        "RuleNumber": "200"
+        "RuleNumber": "150"
       }
     },     
-    "PublicAclIngress210": {
+    "PublicAclIngress160": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
@@ -777,36 +619,10 @@
         "Protocol": "6",
         "PortRange": {"From": 443, "To": 443},
         "RuleAction": "allow",
-        "RuleNumber": "210"
+        "RuleNumber": "160"
       }
     }, 
-    "PublicAclIngress220": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
-        "Egress": false,
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 1433, "To": 1433},
-        "RuleAction": "allow",
-        "RuleNumber": "220"
-      }
-    }, 
-    "PublicAclIngress230": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PublicNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": "::/0",
-        "Egress": false,
-        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 32768, "To": 65535},
-        "RuleAction": "allow",
-        "RuleNumber": "230"
-      }
-    }, 
-    "PublicAclIngress240": {
+    "PublicAclIngress170": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PublicNetworkAcl" ],
       "Properties": {
@@ -816,7 +632,191 @@
         "Protocol": "6",
         "PortRange": {"From": 22, "To": 22},
         "RuleAction": "allow",
-        "RuleNumber": "240"
+        "RuleNumber": "170"
+      }
+    },
+    "PublicAclIngress180": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
+        "Egress": false,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 3389, "To": 3389},
+        "RuleAction": "allow",
+        "RuleNumber": "180"
+      }
+    }, 
+    "PublicAclIngress190": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": "::/0",
+        "Egress": false,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 1024, "To": 65535},
+        "RuleAction": "allow",
+        "RuleNumber": "190"
+      }
+    }, 
+
+    "PublicAclEgress100": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "100",
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "PortRange": {"From": 80, "To": 80},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },     
+    "PublicAclEgress110": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "110",
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "PortRange": {"From": 443, "To": 443},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },     
+    "PublicAclEgress120": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "120",
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
+        "Protocol": "6",
+        "PortRange": {"From": 1433, "To": 1433},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },
+    "PublicAclEgress130": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "130",
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
+        "Protocol": "6",
+        "PortRange": {"From": 3306, "To": 3306},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },         
+    "PublicAclEgress140": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "140",
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "PortRange": {"From": 32768, "To": 65535},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },     
+    "PublicAclEgress150": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "150",
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
+        "Protocol": "6",
+        "PortRange": {"From": 22, "To": 22},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"}
+      }
+    },     
+    
+    "PublicAclEgress160": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": "::/0",
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 80, "To": 80},
+        "RuleAction": "allow",
+        "RuleNumber": "160"
+      }
+    },    
+    "PublicAclEgress170": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": "::/0",
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 443, "To": 443},
+        "RuleAction": "allow",
+        "RuleNumber": "170"
+      }
+    }, 
+    "PublicAclEgress180": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 1433, "To": 1433},
+        "RuleAction": "allow",
+        "RuleNumber": "180"
+      }
+    },
+    "PublicAclEgress190": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 3306, "To": 3306},
+        "RuleAction": "allow",
+        "RuleNumber": "190"
+      }
+    },
+    "PublicAclEgress200": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": "::/0",
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 32768, "To": 65535},
+        "RuleAction": "allow",
+        "RuleNumber": "200"
+      }
+    },
+    "PublicAclEgress210": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PublicNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PublicNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 22, "To": 22},
+        "RuleAction": "allow",
+        "RuleNumber": "210"
       }
     },
 
@@ -1070,127 +1070,6 @@
           ]
        }
     },
-    
-    "PrivateAclEgress100": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "Condition":  "AddNatGW",      
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "100",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 80, "To": 80},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },
-    "PrivateAclEgress110": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "Condition":  "AddNatGW",      
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "110",
-        "CidrBlock": "0.0.0.0/0",
-        "Protocol": "6",
-        "PortRange": {"From": 443, "To": 443},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },
-    "PrivateAclEgress120": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Egress": true,
-        "RuleNumber": "120",
-        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
-        "Protocol": "6",
-        "PortRange": {"From": 49152, "To": 65535},
-        "RuleAction": "allow",
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
-      }
-    },
-
-    "PrivateAclEgress200": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": "::/0",
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 80, "To": 80},
-        "RuleAction": "allow",
-        "RuleNumber": "200"
-      }
-    },     
-    "PrivateAclEgress210": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": "::/0",
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 443, "To": 443},
-        "RuleAction": "allow",
-        "RuleNumber": "210"
-      }
-    }, 
-    "PrivateAclEgress220": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 1433, "To": 1433},
-        "RuleAction": "allow",
-        "RuleNumber": "220"
-      }
-    }, 
-    "PrivateAclEgress230": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 3306, "To": 3306},
-        "RuleAction": "allow",
-        "RuleNumber": "230"
-      }
-    }, 
-    "PrivateAclEgress240": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 32768, "To": 65535},
-        "RuleAction": "allow",
-        "RuleNumber": "240"
-      }
-    },
-    "PrivateAclEgress250": {
-      "Type": "AWS::EC2::NetworkAclEntry",
-      "DependsOn": [ "PrivateNetworkAcl" ],
-      "Properties": {
-        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
-        "Egress": true,
-        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
-        "Protocol": "6",
-        "PortRange": {"From": 22, "To": 22},
-        "RuleAction": "allow",
-        "RuleNumber": "250"
-      }
-    }, 
 
     "PrivateAclIngress100": {
       "Type": "AWS::EC2::NetworkAclEntry",
@@ -1259,7 +1138,7 @@
       }
     },     
 
-    "PrivateAclIngress200": {
+    "PrivateAclIngress150": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
@@ -1269,10 +1148,10 @@
         "Protocol": "6",
         "PortRange": {"From": 1433, "To": 1433},
         "RuleAction": "allow",
-        "RuleNumber": "200"
+        "RuleNumber": "150"
       }
     },     
-    "PrivateAclIngress210": {
+    "PrivateAclIngress160": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
@@ -1282,10 +1161,10 @@
         "Protocol": "6",
         "PortRange": {"From": 3306, "To": 3306},
         "RuleAction": "allow",
-        "RuleNumber": "210"
+        "RuleNumber": "160"
       }
     },    
-    "PrivateAclIngress220": {
+    "PrivateAclIngress170": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
@@ -1295,10 +1174,10 @@
         "Protocol": "6",
         "PortRange": {"From": 22, "To": 22},
         "RuleAction": "allow",
-        "RuleNumber": "220"
+        "RuleNumber": "170"
       }
     },    
-    "PrivateAclIngress230": {
+    "PrivateAclIngress180": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
@@ -1308,10 +1187,10 @@
         "Protocol": "6",
         "PortRange": {"From": 3389, "To": 3389},
         "RuleAction": "allow",
-        "RuleNumber": "230"
+        "RuleNumber": "180"
       }
     }, 
-    "PrivateAclIngress240": {
+    "PrivateAclIngress190": {
       "Type": "AWS::EC2::NetworkAclEntry",
       "DependsOn": [ "PrivateNetworkAcl" ],
       "Properties": {
@@ -1321,9 +1200,91 @@
         "Protocol": "6",
         "PortRange": {"From": 1024, "To": 65535},
         "RuleAction": "allow",
-        "RuleNumber": "240"
+        "RuleNumber": "190"
       }
     },
+      
+    "PrivateAclEgress100": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Condition":  "AddNatGW",      
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "100",
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "PortRange": {"From": 80, "To": 80},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },
+    "PrivateAclEgress110": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Condition":  "AddNatGW",      
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "110",
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "PortRange": {"From": 443, "To": 443},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },
+    "PrivateAclEgress120": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "Egress": true,
+        "RuleNumber": "120",
+        "CidrBlock": {"Fn::Join": ["", ["10.", {"Ref": "classB"}, ".0.0/16"]]},
+        "Protocol": "6",
+        "PortRange": {"From": 32768, "To": 65535},
+        "RuleAction": "allow",
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"}
+      }
+    },
+
+    "PrivateAclEgress130": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": "::/0",
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 80, "To": 80},
+        "RuleAction": "allow",
+        "RuleNumber": "130"
+      }
+    },     
+    "PrivateAclEgress140": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": "::/0",
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 443, "To": 443},
+        "RuleAction": "allow",
+        "RuleNumber": "140"
+      }
+    }, 
+    "PrivateAclEgress150": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "DependsOn": [ "PrivateNetworkAcl" ],
+      "Properties": {
+        "Ipv6CidrBlock": {"Fn::Select": [0, { "Fn::GetAtt": ["VPC","Ipv6CidrBlocks"] }]},
+        "Egress": true,
+        "NetworkAclId": {"Ref": "PrivateNetworkAcl"},
+        "Protocol": "6",
+        "PortRange": {"From": 32768, "To": 65535},
+        "RuleAction": "allow",
+        "RuleNumber": "150"
+      }
+    },   
 
     "PrivateSubnet1aNetworkAclAssociation": {
       "Type": "AWS::EC2::SubnetNetworkAclAssociation",
