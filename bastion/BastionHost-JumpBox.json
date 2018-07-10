@@ -151,7 +151,7 @@
       "Default": "someone@yourdomain.com",      
       "AllowedPattern": "^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-z]{2,})$",
       "ConstraintDescription": "must be a valid email address",      
-      "Description": "The E-Mail adres to send scaling notifications to."
+      "Description": "The E-Mail address to send scaling notifications to."
     },
     
     "zDeveloperName": {

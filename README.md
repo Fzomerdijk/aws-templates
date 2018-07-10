@@ -4,7 +4,7 @@ Therefore I created some "ready-to-go" AWS templates.
 
 ## Templates
 * [Virtual Private Cloud - VPC (json)](./vpc/)
-* [Bastion Host - high available (json)](./bastion/)
+* [Bastion Host / Jump Box - high available (json)](./bastion/)
 
 ## Feedback & support
 If you want to give feedback or see any enhancements, please contact us at: [Indivirtual Support](mailto:support@indivirtual.com)
