@@ -72,7 +72,7 @@ The "Export Name" values in the table below, are from creation of a template wit
 | PrivateSubnet1e   | subnet-id or "publ. 1a" | Private Subnet 1e   | *Dev*-PrivateSubnet1e-*55*   |
 
 ## Other Templates
-* [Bastion Host (high available)](../bastion/)
+* [Bastion Host / Jump Box (high available)](../bastion/)
 
 ## Feedback & support
 If you want to give feedback or need support, please contact us at: [Indivirtual Support](mailto:support@indivirtual.com)

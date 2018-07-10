@@ -16,7 +16,7 @@ To create the missing default subnet in a region, see:
 * <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/default-vpc.html#create-default-subnet" target="_blank">AWS - Create missing default subnet</a>
 
 ## Other Templates
-* [Bastion Host (high available)](../bastion/)
+* [Bastion Host / Jump Box (high available)](../bastion/)
 
 ## Feedback & support
 If you want to give feedback or need support, please contact us at: [Indivirtual Support](mailto:support@indivirtual.com)
