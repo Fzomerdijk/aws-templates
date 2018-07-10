@@ -1,6 +1,6 @@
 # aws-templates
-Amazon Web Services - Bastion Host - AWS Linux
+Amazon Web Services - Bastion Host / Jump Box - AWS Linux
 
 ## Other Templates
 * [Virtual Private Cloud (VPC)](../vpc/)
-* [Bastion Host (high available)](../bastion/)
+* [Bastion Host / Jump Box (high available)](../bastion/)
