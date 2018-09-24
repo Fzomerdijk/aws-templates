@@ -5,11 +5,11 @@ These public and private subnets will be created in ALL the availability zones t
 
 Currently we have these versions of the template:
 
-* [VPC IPv4 with open Access Control Lists (ACL)](./AWS_VPC_open_IPv4_ACL_template)
+* [VPC IPv4 with open Access Control Lists (ACL)](./AWS_VPC_open_IPv4_ACL_template.json)
 
 This is a template that contains a VPC with public and private Access Control Lists, but these ACL's do not have any restriction. So it is up to you to setup appropriate rules!  
 
-* [VPC IPv4 with strict Access Control List (ACL)](./AWS_VPC_strict_IPv4_ACL_template)
+* [VPC IPv4 with strict Access Control List (ACL)](./AWS_VPC_strict_IPv4_ACL_template.json)
 
 In this template the Access Control Lists (ACL) are accoding to the <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_NACLs.html#VPC_Appendix_NACLs_Scenario_2?raw=true" target="_blank">AWS recommended settings</a>, 
 for a VPC with both public and private subnets.
