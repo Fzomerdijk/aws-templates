@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "SSH Bastion Host in AutoScaling Group - AWS Linux - amzn-ami-hvm-2018.03.0.20180622-x86_64-gp2 - v1.5 Amazon Linux AMI 2018.03 ",
+  "Description": "SSH Bastion Host in AutoScaling Group - AWS Linux v2 - amzn2-ami-hvm-2.0.20180924-x86_64-gp2 - v1.6 Amazon Linux v2 AMI 2018.09.24 ",
 
   "Metadata": {
       "AWS::CloudFormation::Interface": {
@@ -164,22 +164,22 @@
   
   "Mappings": {
     "RegionMap": {
-      "ap-northeast-1": {"AMI": "ami-9c9443e3"}, 
-      "ap-northeast-2": {"AMI": "ami-ebc47185"}, 
-      "ap-northeast-3": {"AMI": "ami-09b8b674"}, 
-      "ap-south-1": {"AMI": "ami-5a8da735"}, 
-      "ap-southeast-1": {"AMI": "ami-ed838091"}, 
-      "ap-southeast-2": {"AMI": "ami-33f92051"}, 
-      "ca-central-1": {"AMI": "ami-03e86a67"}, 
-      "eu-central-1": {"AMI": "ami-a058674b"}, 
-      "eu-west-1": {"AMI": "ami-e4515e0e"}, 
-      "eu-west-2": {"AMI": "ami-b2b55cd5"}, 
-      "eu-west-3": {"AMI": "ami-d50bbaa8"}, 
-      "sa-east-1": {"AMI": "ami-83d58fef"}, 
-      "us-east-1": {"AMI": "ami-cfe4b2b0"}, 
-      "us-east-2": {"AMI": "ami-40142d25"}, 
-      "us-west-1": {"AMI": "ami-0e86606d"}, 
-      "us-west-2": {"AMI": "ami-0ad99772"}   
+      "ap-northeast-1": {"AMI": "ami-06962fe7164c1fe7b"}, 
+      "ap-northeast-2": {"AMI": "ami-02e495c61af26da99"}, 
+      "ap-northeast-3": {"AMI": "ami-0af9707b77c10b811"}, 
+      "ap-south-1": {"AMI": "ami-0b173ae0d9e71699a"}, 
+      "ap-southeast-1": {"AMI": "ami-0f67499750e64577a"}, 
+      "ap-southeast-2": {"AMI": "ami-0e2b2114bf2fac7d8"}, 
+      "ca-central-1": {"AMI": "ami-0c612fea430136cb0"}, 
+      "eu-central-1": {"AMI": "ami-0e82b8b6afa30f2cd"}, 
+      "eu-west-1": {"AMI": "ami-0eafb5ee12a2cbffc"}, 
+      "eu-west-2": {"AMI": "ami-0135b45434a538069"}, 
+      "eu-west-3": {"AMI": "ami-07e5d89c9e173f360"}, 
+      "sa-east-1": {"AMI": "ami-0e4c9b46b89ddd90c"}, 
+      "us-east-1": {"AMI": "ami-0e6d2e8684d4ccb3e"}, 
+      "us-east-2": {"AMI": "ami-0785b10e84f9dbd4f"}, 
+      "us-west-1": {"AMI": "ami-01eb1709d6ad69035"}, 
+      "us-west-2": {"AMI": "ami-0fcd5791ba781e98f"}   
     }
   },
   
@@ -412,7 +412,7 @@
             },
             "services": {
               "sysvinit": {
-                "awslogs": {
+                "awslogsd": {
                   "enabled": "true",
                   "ensureRunning": "true",
                   "packages": {
