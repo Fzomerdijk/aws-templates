@@ -74,5 +74,3 @@ The "Export Name" values in the table below, are from creation of a template wit
 ## Other Templates
 * [Bastion Host / Jump Box (high available)](../bastion/)
 
-## Feedback & support
-If you want to give feedback or need support, please contact us at: [Indivirtual Support](mailto:support@indivirtual.com)

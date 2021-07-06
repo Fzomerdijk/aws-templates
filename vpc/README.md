@@ -17,6 +17,3 @@ To create the missing default subnet in a region, see:
 
 ## Other Templates
 * [Bastion Host / Jump Box (high available)](../bastion/)
-
-## Feedback & support
-If you want to give feedback or need support, please contact us at: [Indivirtual Support](mailto:support@indivirtual.com)

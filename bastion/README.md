@@ -22,6 +22,3 @@ This template will create a Bastion Host (Jump Box) in your VPC. The Bastion Hos
 ## Other Templates
 * [Virtual Private Cloud (VPC)](../vpc/)
 * [Bastion Host / Jump Box (high available)](../bastion/)
-
-## Feedback & support
-If you want to give feedback or need support, please contact us at: [Indivirtual Support](mailto:support@indivirtual.com)
